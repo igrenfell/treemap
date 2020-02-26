@@ -67,7 +67,7 @@ writebrick <- function(curdir.sub)
   
 }
 
-
+a <- 1+1
 
 for(curdir in 1:ndirs)
 {
