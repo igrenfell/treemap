@@ -24,6 +24,10 @@ writebrick <- function(curdir.sub)
   setwd(zdir)
   setwd(subdirs.sub[curdir.sub])
   
+  tempwd <- getwd()
+  tempwd <- paste(tempwd, "temp", sep = "")
+  dir.create(tempwd)
+  rasterOptions(tmpdir=tempwd)
   img.files <- Sys.glob("*.img")
   nras <- length(img.files)
   
