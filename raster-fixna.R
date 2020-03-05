@@ -178,7 +178,7 @@ for(i in 1:length(vpd.flist))
   
 }
 
-raster.list$fun <- min
+raster.list$fun <- max
 raster.list$na.rm <- TRUE
 
 vpd.mosaic <- do.call("mosaic", raster.list)
