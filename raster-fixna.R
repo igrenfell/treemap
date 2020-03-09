@@ -186,3 +186,137 @@ vpd.mosaic <- do.call("mosaic", raster.list)
 
 
 
+vpd.raster.orig <- vpd.mosaic
+
+proj4string(vpd.mosaic) <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
+
+writeRaster(vpd.mosaic, "vpd-mosaic.tif", format = "GTiff", overwrite = TRUE)
+
+
+bbox.mosaic <- extent(vpd.mosaic)
+
+##Get forested layer
+xminval  <- xmin(vpd.mosaic)
+xmaxval  <- xmax(vpd.mosaic)
+yminval  <- ymin(vpd.mosaic)
+ymaxval  <- ymax(vpd.mosaic)
+
+xquart <- diff(range(c(xminval, xmaxval)))/16 + xminval
+
+xmean <- mean(c(xminval, xmaxval))
+
+ymean <- mean(c(yminval, ymaxval))
+
+yquart <- ymaxval-diff(range(c(yminval, ymaxval)))/16
+
+xmintemp <- xmean-300
+xmaxtemp <- xmean+300
+
+
+ymintemp <- ymean-300
+ymaxtemp <- ymean+300
+
+
+bbox.crop <- bbox.mosaic
+
+bbox.crop[1] <- xmintemp
+bbox.crop[2] <- xmaxtemp
+bbox.crop[3] <- ymintemp
+bbox.crop[4] <- ymaxtemp
+
+vpd.test <- crop(vpd.mosaic, bbox.crop)
+
+##get upper left quarter
+xmintemp <- xminval
+xmaxtemp <- xquart
+ymintemp <- xquart
+ymaxtemp <- ymaxval
+
+bbox.crop <- bbox.mosaic
+
+bbox.crop[1] <- xmintemp
+bbox.crop[2] <- xmaxtemp
+bbox.crop[3] <- ymintemp
+bbox.crop[4] <- ymaxtemp
+
+vpd.test <- crop(vpd.mosaic, bbox.crop)
+writeRaster(vpd.test, "vpd-test-nweightth.tif", format = "GTiff", overwrite = TRUE)
+
+vpd.nw <- vpd.crop
+writeRaster(vpd.nw, "vpd-nw.tif", format = "GTiff", overwrite = TRUE)
+
+###Get forested raster
+setwd("H:\\TreeMap2016\\target_data\\national_masks")
+forest.raster <- raster("EVG_maskedEVCforest_nodevdist.tif"  )
+
+forest.prj <- proj4string(forest.raster)
+
+extent(vpd.mosaic)
+extent(forest.raster)
+
+###Get forested raster
+setwd("H:\\TreeMap2016\\target_data\\national_masks")
+forest.raster <- raster("EVG_maskedEVCforest_nodevdist.tif"  )
+forest.crop <- crop(forest.raster, extent(vpd.mosaic))
+setwd("G:/Workspace/treemap/Spatial_data/output")
+
+writeRaster(forest.crop, "forest-crop.tif", format = "GTiff", overwrite = TRUE)
+vpd.mosaic[forest.crop < 1] <- NA
+
+
+writeRaster(vpd.mosaic, "vpd-forest.tif", format = "GTiff", overwrite = TRUE)
+
+forest.crop.temp <- crop(forest.crop, bbox.crop)
+
+forest.extend.temp <- extend(forest.crop.temp, extent(vpd.mosaic))
+
+
+
+
+forest.mask.temp <- mask(vpd.test, forest.crop.temp)
+
+
+ext.forest.mask.temp <- extent(forest.mask.temp)
+
+writeRaster(forest.extend.temp, "forest-mask-extended.tif", type= "GTiff", overwrite=T)
+
+vpd.mask <- mask(vpd.mosaic, forest.extend.temp)
+Sys.time()
+writeRaster(vpd.mask, "vpd-mask.tif", type= "GTiff", overwrite=T)
+Sys.time() 
+xmin.forest <- ext.forest.mask.temp[1]
+xmax.forest <- ext.forest.mask.temp[2]
+ymin.forest <- ext.forest.mask.temp[3]
+ymax.forest <- ext.forest.mask.temp[4]
+
+
+bbox.forest <- cbind(x=c(xmin.forest, xmax.forest, xmax.forest, xmin.forest), y=c(ymax.forest, ymax.forest, ymin.forest, ymin.forest))
+bbox.vpd <- cbind(x=c(xminval, xmaxval, xmaxval, xminval), y=c(ymaxval, ymaxval, yminval, yminval))
+extent(vpd.test)
+extent(forest.crop.temp)
+
+###get the right fucking extent
+
+e.forest <- extent(forest.crop)
+e.biop <- extent(vpd.mosaic)
+
+t.xmin <- e.forest[1] - e.biop[1]
+t.xmax <- e.forest[2] - e.biop[2]
+t.ymin <- e.forest[3] - e.biop[3]
+t.ymax <- e.forest[4] - e.biop[4]
+
+xmin.min <- min(e.forest[1])
+
+
+xmin.min <- min(c(e.forest[1], e.biop[1]))
+xmax.max <- max(c(e.forest[2], e.biop[2]))
+ymin.min <- min(c(e.forest[3], e.biop[3]))
+ymax.max <- max(c(e.forest[4], e.biop[4]))
+
+r.all <- raster(xmn = xmin.min, xmx = xmax.max, ymn = ymin.min, ymx = ymax.max)
+
+
+
+
+
+
