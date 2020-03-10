@@ -280,43 +280,15 @@ ext.forest.mask.temp <- extent(forest.mask.temp)
 
 writeRaster(forest.extend.temp, "forest-mask-extended.tif", type= "GTiff", overwrite=T)
 
+
+beginCluster(62)
 vpd.mask <- mask(vpd.mosaic, forest.extend.temp)
 Sys.time()
+
 writeRaster(vpd.mask, "vpd-mask.tif", type= "GTiff", overwrite=T)
 Sys.time() 
-xmin.forest <- ext.forest.mask.temp[1]
-xmax.forest <- ext.forest.mask.temp[2]
-ymin.forest <- ext.forest.mask.temp[3]
-ymax.forest <- ext.forest.mask.temp[4]
 
-
-bbox.forest <- cbind(x=c(xmin.forest, xmax.forest, xmax.forest, xmin.forest), y=c(ymax.forest, ymax.forest, ymin.forest, ymin.forest))
-bbox.vpd <- cbind(x=c(xminval, xmaxval, xmaxval, xminval), y=c(ymaxval, ymaxval, yminval, yminval))
-extent(vpd.test)
-extent(forest.crop.temp)
-
-###get the right fucking extent
-
-e.forest <- extent(forest.crop)
-e.biop <- extent(vpd.mosaic)
-
-t.xmin <- e.forest[1] - e.biop[1]
-t.xmax <- e.forest[2] - e.biop[2]
-t.ymin <- e.forest[3] - e.biop[3]
-t.ymax <- e.forest[4] - e.biop[4]
-
-xmin.min <- min(e.forest[1])
-
-
-xmin.min <- min(c(e.forest[1], e.biop[1]))
-xmax.max <- max(c(e.forest[2], e.biop[2]))
-ymin.min <- min(c(e.forest[3], e.biop[3]))
-ymax.max <- max(c(e.forest[4], e.biop[4]))
-
-r.all <- raster(xmn = xmin.min, xmx = xmax.max, ymn = ymin.min, ymx = ymax.max)
-
-
-
+endCluster()
 
 
 
