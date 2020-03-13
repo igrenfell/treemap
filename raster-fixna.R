@@ -266,14 +266,14 @@ vpd.mosaic[forest.crop < 1] <- NA
 
 writeRaster(vpd.mosaic, "vpd-forest.tif", format = "GTiff", overwrite = TRUE)
 
-forest.crop.temp <- crop(forest.crop, bbox.crop)
+forest.crop.temp <- crop(forest.crop, extent(vpd.mosaic))
 
 forest.extend.temp <- extend(forest.crop.temp, extent(vpd.mosaic))
 
 
 
 
-forest.mask.temp <- mask(vpd.test, forest.crop.temp)
+forest.mask.temp <- mask(vpd.mosaic, forest.crop.temp)
 
 
 ext.forest.mask.temp <- extent(forest.mask.temp)
@@ -292,3 +292,75 @@ endCluster()
 
 
 
+###Get all layers, loop through zones and write masked output
+
+
+setwd("G:\\Workspace\\treemap\\Spatial_data\\national_masks")
+
+flist.layers <- Sys.glob("*.tif")
+masklayers <- grep("mask", flist.layers)
+flist.mask <- flist.layers[masklayers]
+
+n.mask <- length(flist.mask)
+r.mask <- raster(flist.mask[1])
+
+for(i in 2:n.mask)
+{
+  tempraster <- raster(flist.mask[i])
+  r.mask <- stack(tempraster, r.mask)
+  
+  
+}
+
+
+setwd("G:\\Workspace\\treemap\\Spatial_data\\output")
+
+flist.zones <- Sys.glob("*.tif")
+tmax.zones <- grep("tmax", flist.zones)
+flist.zones.sub <- flist.zones[tmax.zones]
+
+nzones <- length(flist.zones.sub)
+getzone <- function(curzone)
+{
+  
+  library(raster)
+  library(rgdal)
+  library(sp)
+  setwd("G:\\Workspace\\treemap\\Spatial_data\\output")
+  
+  curzone.raster <- raster(flist.zones.sub[curzone])
+  
+  curext <- extent(curzone.raster)
+  
+  r1 <- subset(r.mask, 1)
+  curcrop <- crop(r1, curext)
+  curcrop <- extend(curcrop , curext)
+  curzone.raster[curzone.raster < 1] <- NA
+  curmask <- mask(curcrop , curzone.raster) 
+  nl <- nlayers(curmask)
+  tempzone <- flist.zones.sub[curzone]
+  tempzone <- gsub("tmax", "", tempzone)
+  setwd("G:\\Workspace\\treemap\\Spatial_data\\masked-output")
+  for(curlayer in 1:nl)
+  {
+    tempmask <- subset(curmask, curlayer)
+    tempname <- names(tempmask)
+    
+    tempname <- gsub("[.]", "-", tempname)
+    tempname 
+    ftemp <- paste(tempname, "-", tempzone, sep = "")
+    writeRaster(tempmask, ftemp, format = "GTiff", overwrite = TRUE)
+    
+  }
+  
+}
+
+library(parallel)
+cl = makeCluster(11)
+Sys.time()
+clusterExport(cl, c("flist.zones", "tmax.zones","flist.zones.sub", "nzones" , "r.mask"))
+parLapply(cl, 1:nzones, getzone)
+
+stopCluster(cl)
+
+Sys.time()
