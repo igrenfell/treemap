@@ -7,7 +7,7 @@ library(parallel)
 setwd("G:\\Workspace\\treemap")
 
 setwd("G:\\Workspace\\treemap\\Spatial_data\\biophysical_gradients\\d.gradients")
-
+###First step- get biophysical rasters for each zone polygon
 
 rdir <- getwd()
 subdirs <- list.files()
@@ -153,7 +153,7 @@ closeAllConnections()
 
 
 
-##On to mosaic-ing the rasters
+##Step two: Put all zonal rasters into one big mosaic
 
 library(raster)
 setwd("G:/Workspace/treemap/Spatial_data/output")
@@ -195,7 +195,7 @@ writeRaster(vpd.mosaic, "vpd-mosaic.tif", format = "GTiff", overwrite = TRUE)
 
 bbox.mosaic <- extent(vpd.mosaic)
 
-##Get forested layer
+##Step three: Mask out non-forested pixels
 xminval  <- xmin(vpd.mosaic)
 xmaxval  <- xmax(vpd.mosaic)
 yminval  <- ymin(vpd.mosaic)
@@ -239,12 +239,6 @@ bbox.crop[2] <- xmaxtemp
 bbox.crop[3] <- ymintemp
 bbox.crop[4] <- ymaxtemp
 
-vpd.test <- crop(vpd.mosaic, bbox.crop)
-writeRaster(vpd.test, "vpd-test-nweightth.tif", format = "GTiff", overwrite = TRUE)
-
-vpd.nw <- vpd.crop
-writeRaster(vpd.nw, "vpd-nw.tif", format = "GTiff", overwrite = TRUE)
-
 ###Get forested raster
 setwd("H:\\TreeMap2016\\target_data\\national_masks")
 forest.raster <- raster("EVG_maskedEVCforest_nodevdist.tif"  )
@@ -254,7 +248,7 @@ forest.prj <- proj4string(forest.raster)
 extent(vpd.mosaic)
 extent(forest.raster)
 
-###Get forested raster
+###Crop, extend and mask to forested raster
 setwd("H:\\TreeMap2016\\target_data\\national_masks")
 forest.raster <- raster("EVG_maskedEVCforest_nodevdist.tif"  )
 forest.crop <- crop(forest.raster, extent(vpd.mosaic))
@@ -332,28 +326,42 @@ getzone <- function(curzone)
   
   curext <- extent(curzone.raster)
   
-  r1 <- subset(r.mask, 1)
-  curcrop <- crop(r1, curext)
+  
+  
+  
+  #vpd.layer <- subset(r.mask, 1)
+  #cur.layer.layer <- subset(r.mask, 1)
+  curcrop <- crop(r.mask, curext)
   curcrop <- extend(curcrop , curext)
-  curzone.raster[curzone.raster < 1] <- NA
   curmask <- mask(curcrop , curzone.raster) 
   nl <- nlayers(curmask)
   tempzone <- flist.zones.sub[curzone]
   tempzone <- gsub("tmax", "", tempzone)
-  setwd("G:\\Workspace\\treemap\\Spatial_data\\masked-output")
+  setwd("G:\\Workspace\\treemap\\Spatial_data\\masked-output-v2")
+  #tempname <- names(r1)
+  #tempname <- gsub("[.]", "-", tempname)
+  #ftemp <- paste(tempname, "-", tempzone, sep = "")
+  #writeRaster(tempmask, ftemp, format = "GTiff", overwrite = TRUE)
   for(curlayer in 1:nl)
   {
-    tempmask <- subset(curmask, curlayer)
-    tempname <- names(tempmask)
+    tmax.layer <- subset(curmask,  3)
+    
+    tempmask.orig <- subset(curmask, curlayer)
+    tempname <- names(tempmask.orig)
+    
+    tempmask.orig[curzone.raster < 1] <- NA
+    
     
     tempname <- gsub("[.]", "-", tempname)
     tempname 
     ftemp <- paste(tempname, "-", tempzone, sep = "")
-    writeRaster(tempmask, ftemp, format = "GTiff", overwrite = TRUE)
+    writeRaster(tempmask.orig, ftemp, format = "GTiff", overwrite = TRUE)
     
   }
   
 }
+
+
 
 library(parallel)
 cl = makeCluster(11)
