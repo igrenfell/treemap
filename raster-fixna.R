@@ -372,3 +372,5 @@ parLapply(cl, 1:nzones, getzone)
 stopCluster(cl)
 
 Sys.time()
+
+gittest <- "TRUE"
